@@ -10,8 +10,8 @@ library(vegan)
 library(lme4)
 
 # Datasets needed:
-transect.raw <- read.csv("transect_data.csv", header = TRUE)
-diversity.raw <- read.csv("diversity_data.csv", header = TRUE)
+transect.raw <- read.csv("data/transect_data.csv", header = TRUE)
+diversity.raw <- read.csv("data/diversity_data.csv", header = TRUE)
 
 
 
@@ -154,7 +154,7 @@ diversity.noNA$invasive.pred <- predict(invasive.mod, re.form = NA)
 
 # STEP 5: Save diversity data frames as objects to pull in visualization script
 
-save(diversity, diversity.noNA, file = "psp_dataframes.Rdata")
+save(diversity, diversity.noNA, file = "data/psp_dataframes.Rdata")
 
 
 

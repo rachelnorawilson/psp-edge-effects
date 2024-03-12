@@ -8,7 +8,7 @@
 library(ggplot2)
 
 # Load R data:
-load("psp_dataframes.Rdata") # diversity.noNA is used for invasive proportion only
+load("data/psp_dataframes.Rdata") # diversity.noNA is used for invasive proportion only
 
 
 
@@ -27,7 +27,7 @@ load("psp_dataframes.Rdata") # diversity.noNA is used for invasive proportion on
        y = "Species richness") + 
   ylim(-0.4, NA) +
   theme_classic())
-ggsave("richness_clean.png", plot = richness.plot, width = 3.5, height = 3.5)
+ggsave("figures/richness_clean.png", plot = richness.plot, width = 3.5, height = 3.5)
 
 (richness.plot.wpoints <- ggplot(aes(x = distance, y = richness), data = diversity) +
     geom_smooth(method = "lm",
@@ -48,7 +48,7 @@ ggsave("richness_clean.png", plot = richness.plot, width = 3.5, height = 3.5)
          y = "Species richness") + 
     ylim(-0.4, NA) +
     theme_classic())
-ggsave("richness_points.png", plot = richness.plot.wpoints, width = 3.5, height = 3.5)
+ggsave("figures/richness_points.png", plot = richness.plot.wpoints, width = 3.5, height = 3.5)
 
 
 # Shannon
@@ -66,7 +66,7 @@ ggsave("richness_points.png", plot = richness.plot.wpoints, width = 3.5, height 
          y = "Shannon diversity index") + 
     ylim(-0.03, NA) +
     theme_classic())
-ggsave("shannon_clean.png", plot = shannon.plot, width = 3.5, height = 3.5)
+ggsave("figures/shannon_clean.png", plot = shannon.plot, width = 3.5, height = 3.5)
 
 (shannon.plot.wpoints <- ggplot(aes(x = distance, y = shannon), data = diversity) +
     geom_smooth(method = "lm",
@@ -87,7 +87,7 @@ ggsave("shannon_clean.png", plot = shannon.plot, width = 3.5, height = 3.5)
          y = "Shannon diversity index") + 
     ylim(-0.03, NA) +
     theme_classic())
-ggsave("shannon_points.png", plot = shannon.plot.wpoints, width = 3.5, height = 3.5)
+ggsave("figures/shannon_points.png", plot = shannon.plot.wpoints, width = 3.5, height = 3.5)
 
 
 # Invasive species proportion
@@ -105,7 +105,7 @@ ggsave("shannon_points.png", plot = shannon.plot.wpoints, width = 3.5, height = 
          y = "Proportion of invasive species") + 
     ylim(-0.03, NA) +
     theme_classic())
-ggsave("invasive_clean.png", plot = invasive.plot, width = 3.5, height = 3.5)
+ggsave("figures/invasive_clean.png", plot = invasive.plot, width = 3.5, height = 3.5)
 
 (invasive.plot.wpoints <- ggplot(aes(x = distance, y = invasive.prop), data = diversity.noNA) +
     geom_smooth(method = "lm",
@@ -126,7 +126,7 @@ ggsave("invasive_clean.png", plot = invasive.plot, width = 3.5, height = 3.5)
          y = "Proportion of invasive species") + 
     ylim(-0.03, NA) +
     theme_classic())
-ggsave("invasive_points.png", plot = invasive.plot.wpoints, width = 3.5, height = 3.5)
+ggsave("figures/invasive_points.png", plot = invasive.plot.wpoints, width = 3.5, height = 3.5)
 
 
 
