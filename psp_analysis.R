@@ -96,22 +96,7 @@ for(i in 1:length(unique(div_long$transect_name))) { # Loop for transect names
 diversity <- bind_rows(diversity.list)
 
 
-# STEP 2: Create a mixed model for RICHNESS
-
-richness.mod <- lmer(richness ~ distance + (1|transect_name), data = diversity)
-summary(richness.mod) # Distance coefficient estimate: 0.018250
-confint(richness.mod) # CI for distance: 0.009258098 - 0.02724267
-
-# What % of remaining variance can be explained by transect?
-0.1727/(0.1727+2.0843) # 7.65%
-
-richness.null <- lmer(richness ~ 1 + (1|transect_name), data = diversity)
-anova(richness.mod, richness.null) # P = 7.562e-05/2 = 3.781e-05
-
-diversity$richness.pred <- predict(richness.mod, re.form = NA)
-
-
-# STEP 3: Create a mixed model for SHANNON
+# STEP 2: Create a mixed model for SHANNON
 
 shannon.mod <- lmer(shannon ~ distance + (1|transect_name), data = diversity)
 summary(shannon.mod) # Distance coefficient estimate: 0.004334
@@ -126,6 +111,21 @@ anova(shannon.mod, shannon.null) # P = 0.002526/2 = 0.001263 (testing on boundar
 
 diversity$shannon.pred <- predict(shannon.mod, re.form = NA)
 
+
+
+# STEP 3: Create a mixed model for RICHNESS
+
+richness.mod <- lmer(richness ~ distance + (1|transect_name), data = diversity)
+summary(richness.mod) # Distance coefficient estimate: 0.018250
+confint(richness.mod) # CI for distance: 0.009258098 - 0.02724267
+
+# What % of remaining variance can be explained by transect?
+0.1727/(0.1727+2.0843) # 7.65%
+
+richness.null <- lmer(richness ~ 1 + (1|transect_name), data = diversity)
+anova(richness.mod, richness.null) # P = 7.562e-05/2 = 3.781e-05
+
+diversity$richness.pred <- predict(richness.mod, re.form = NA)
 
 # STEP 4: Create a mixed model for INVASIVE PROPORTION
 
