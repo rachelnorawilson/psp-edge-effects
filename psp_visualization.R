@@ -1,9 +1,6 @@
 ### Analysis of understory plant data collected in Pacific Spirit Park
 ### along a gradient of distance from the edge
 
-### NOTE: Random slope & intercept models were tested but failed to converge, 
-### even when adjusting the optimizer.
-
 # Packages needed:
 library(ggplot2)
 
