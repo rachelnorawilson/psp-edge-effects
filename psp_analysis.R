@@ -9,38 +9,58 @@ library(tidyverse)
 library(vegan)
 library(lme4)
 
-# Datasets needed:
-transect.raw <- read.csv("data/transect_data.csv", header = TRUE)
-diversity.raw <- read.csv("data/diversity_data.csv", header = TRUE)
+# Datasets needed (double check that you have the correct year and term):
+transect.raw <- read.csv("data/transect_data_Summer2024.csv", header = TRUE)
+diversity.raw <- read.csv("data/diversity_data_Summer2024.csv", header = TRUE)
 
 
 
 ### Question 1: Do easterly transects contain more garbage, dog feces, or fallen trees?
 
-# Subset transect data to Y only
-filter(transect.raw, dog_feces == "Y")
-
-# Create a data frame summarizing Y/N for each variable of interest
-feces <- transect.raw %>%
-  filter(dog_feces == "Y") %>%
-  count(direction, dog_feces, name = "total_dog_feces")
-garbage <- transect.raw %>%
-  filter(garbage == "Y") %>%
-  count(direction, garbage, name = "total_garbage")
-trees <- transect.raw %>%
-  filter(fallen_trees == "Y") %>%
-  count(direction, fallen_trees, name = "total_trees")
-
-# Join into one data frame, remove unhelpful columns, summarize by proportion of transects
-(transect_summary <- feces %>%
-  left_join(garbage, by = "direction") %>%
-  left_join(trees, by = "direction") %>%
-  select(-dog_feces, -garbage, -fallen_trees) %>%
-  mutate(prop_dog_feces = total_dog_feces / (nrow(transect.raw)/2),
-         prop_garbage = total_garbage / (nrow(transect.raw)/2),
-         prop_trees = total_trees / nrow(transect.raw)/2))
+if(is.numeric(transect.raw$dog_feces) == TRUE) {
+  
+  ## NEW: Numeric counts (# of times observed)
+  
+  feces <- transect.raw %>%
+    group_by(direction) %>%
+    summarise(feces = mean(dog_feces))
+  garbage <- transect.raw %>%
+    group_by(direction) %>%
+    summarise(garbage = mean(garbage))
+  transect_summary <- feces %>%
+    left_join(garbage, by = "direction")
+    
+} else {
+  
+  ## OLD: Binary Y/N data
+  
+  # Subset transect data to Y only
+  filter(transect.raw, dog_feces == "Y")
+  
+  # Create a data frame summarizing Y/N for each variable of interest
+  feces <- transect.raw %>%
+    filter(dog_feces == "Y") %>%
+    count(direction, dog_feces, name = "total_dog_feces")
+  garbage <- transect.raw %>%
+    filter(garbage == "Y") %>%
+    count(direction, garbage, name = "total_garbage")
+  trees <- transect.raw %>%
+    filter(fallen_trees == "Y") %>%
+    count(direction, fallen_trees, name = "total_trees")
+  
+  # Join into one data frame, remove unhelpful columns, summarize by proportion of transects
+  (transect_summary <- feces %>%
+      left_join(garbage, by = "direction") %>%
+      left_join(trees, by = "direction") %>%
+      select(-dog_feces, -garbage, -fallen_trees) %>%
+      mutate(prop_dog_feces = total_dog_feces / (nrow(transect.raw)/2),
+             prop_garbage = total_garbage / (nrow(transect.raw)/2),
+             prop_trees = total_trees / nrow(transect.raw)/2))
+  
+}
 
 # Copy values into a table in report.
+
 
 
 ### Question 2: Does diversity or invasive species change with distance from the forest edge?
@@ -49,7 +69,7 @@ div_long <- diversity.raw %>%
   gather(key = "distance", value = "cover", -transect_name, -species) %>%
   mutate(distance = str_replace(distance, "X", ""))
 
-invasive.species.list <- c("Eng_holly", "Him_blackberry", "Eng_laurel", "wall_lettuce")
+invasive.species.list <- c("Eng_holly", "Him_blackberry", "Eng_laurel", "wall_lettuce", "unk_vetch")
 
 # STEP 1: Create a summary data frame that describes diversity at each distance and transect
 
@@ -98,16 +118,20 @@ diversity <- bind_rows(diversity.list)
 
 # STEP 2: Create a mixed model for SHANNON
 
-shannon.mod <- lmer(shannon ~ distance + (1|transect_name), data = diversity)
-summary(shannon.mod) # Distance coefficient estimate: 0.004334
-confint(shannon.mod) # CI for distance: 0.001527738 - 0.007140333
+shannon.mod <- lmer(shannon ~ distance + (1|transect_name), data = diversity) # Summer 2024 singular fit warning; results dubious
+summary(shannon.mod) # Distance coefficient estimate: 0.009295
+confint(shannon.mod) # CI for distance: 0.002220494 - 0.01637023
+var.components.shannon <- as.data.frame(VarCorr(shannon.mod))
+transect.var.shannon <- var.components.shannon$vcov[1]
+residual.var.shannon <- var.components.shannon$vcov[2]
 
 # What % of remaining variance can be explained by transect?
-0.01558/(0.01558+0.20266) # 7.14%
+(transect.var.shannon / (transect.var.shannon + residual.var.shannon)) * 100 # 0%
 
 # Likelihood ratio test with REML
 shannon.null <- lmer(shannon ~ 1 + (1|transect_name), data = diversity)
-anova(shannon.mod, shannon.null) # P = 0.002526/2 = 0.001263 (testing on boundary)
+(shannon.anova <- anova(shannon.mod, shannon.null))
+(shannon.anova.P <- shannon.anova$`Pr(>Chisq)`[2]/2) # divide P by 2 (testing on boundary)
 
 diversity$shannon.pred <- predict(shannon.mod, re.form = NA)
 
@@ -115,15 +139,20 @@ diversity$shannon.pred <- predict(shannon.mod, re.form = NA)
 
 # STEP 3: Create a mixed model for RICHNESS
 
-richness.mod <- lmer(richness ~ distance + (1|transect_name), data = diversity)
-summary(richness.mod) # Distance coefficient estimate: 0.018250
-confint(richness.mod) # CI for distance: 0.009258098 - 0.02724267
+richness.mod <- lmer(richness ~ distance + (1|transect_name), data = diversity) # Summer 2024 singular fit warning; results dubious
+summary(richness.mod) # Distance coefficient estimate: 0.02597
+confint(richness.mod) # CI for distance: 0.003533727 - 0.04841432
+var.components.richness <- as.data.frame(VarCorr(richness.mod))
+transect.var.richness <- var.components.richness$vcov[1]
+residual.var.richness <- var.components.richness$vcov[2]
 
 # What % of remaining variance can be explained by transect?
-0.1727/(0.1727+2.0843) # 7.65%
+(transect.var.richness / (transect.var.richness + residual.var.richness))  * 100 # 0%
 
+# Likelihood ratio test with REML
 richness.null <- lmer(richness ~ 1 + (1|transect_name), data = diversity)
-anova(richness.mod, richness.null) # P = 7.562e-05/2 = 3.781e-05
+(richness.anova <- anova(richness.mod, richness.null))
+(richness.anova.P <- richness.anova$`Pr(>Chisq)`[2]/2) # divide P by 2 (testing on the boundary)
 
 diversity$richness.pred <- predict(richness.mod, re.form = NA)
 
@@ -134,15 +163,19 @@ diversity.noNA <- diversity %>%
   filter(!is.na(invasive.prop))
 
 invasive.mod <- lmer(invasive.prop ~ distance + (1|transect_name), data = diversity.noNA)
-summary(invasive.mod) # Distance coefficient estimate: -0.0019796
-confint(invasive.mod) # CI for distance: -0.00338765 - -0.0005760711
+summary(invasive.mod) # Distance coefficient estimate: 0.0004215
+confint(invasive.mod) # CI for distance: -0.00153514 - 0.00237792
+var.components.invasive <- as.data.frame(VarCorr(invasive.mod))
+transect.var.invasive <- var.components.invasive$vcov[1]
+residual.var.invasive <- var.components.invasive$vcov[2]
 
 # What % of remaining variance can be explained by transect?
-0.0009144/(0.0009144+0.0488888) # 1.84%
+(transect.var.invasive / (transect.var.invasive + residual.var.invasive))  * 100 # 5%
 
 # Likelihood ratio test with REML
 invasive.null <- lmer(invasive.prop ~ 1 + (1|transect_name), data = diversity.noNA)
-anova(invasive.mod, invasive.null) # P = 0.005799/2 = 0.0028995 (testing on boundary)
+(invasive.anova <- anova(invasive.mod, invasive.null))
+(invasive.anova.P <- invasive.anova$`Pr(>Chisq)`[2]/2) # divide P by 2 (testing on the boundary)
 
 diversity.noNA$invasive.pred <- predict(invasive.mod, re.form = NA)
 
