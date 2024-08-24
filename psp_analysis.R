@@ -128,10 +128,10 @@ residual.var.shannon <- var.components.shannon$vcov[2]
 # What % of remaining variance can be explained by transect?
 (transect.var.shannon / (transect.var.shannon + residual.var.shannon)) * 100 # 0%
 
-# Likelihood ratio test with REML
+# Likelihood ratio test with REML. Divide P by 2 (testing on the boundary)
 shannon.null <- lmer(shannon ~ 1 + (1|transect_name), data = diversity)
 (shannon.anova <- anova(shannon.mod, shannon.null))
-(shannon.anova.P <- shannon.anova$`Pr(>Chisq)`[2]/2) # divide P by 2 (testing on boundary)
+(shannon.anova.P <- shannon.anova$`Pr(>Chisq)`[2]/2) # 0.005304341
 
 diversity$shannon.pred <- predict(shannon.mod, re.form = NA)
 
@@ -149,10 +149,10 @@ residual.var.richness <- var.components.richness$vcov[2]
 # What % of remaining variance can be explained by transect?
 (transect.var.richness / (transect.var.richness + residual.var.richness))  * 100 # 0%
 
-# Likelihood ratio test with REML
+# Likelihood ratio test with REML. Divide P by 2 (testing on the boundary)
 richness.null <- lmer(richness ~ 1 + (1|transect_name), data = diversity)
 (richness.anova <- anova(richness.mod, richness.null))
-(richness.anova.P <- richness.anova$`Pr(>Chisq)`[2]/2) # divide P by 2 (testing on the boundary)
+(richness.anova.P <- richness.anova$`Pr(>Chisq)`[2]/2) #0.01189881
 
 diversity$richness.pred <- predict(richness.mod, re.form = NA)
 
@@ -172,10 +172,10 @@ residual.var.invasive <- var.components.invasive$vcov[2]
 # What % of remaining variance can be explained by transect?
 (transect.var.invasive / (transect.var.invasive + residual.var.invasive))  * 100 # 5%
 
-# Likelihood ratio test with REML
+# Likelihood ratio test with REML. Divide P by 2 (testing on the boundary)
 invasive.null <- lmer(invasive.prop ~ 1 + (1|transect_name), data = diversity.noNA)
 (invasive.anova <- anova(invasive.mod, invasive.null))
-(invasive.anova.P <- invasive.anova$`Pr(>Chisq)`[2]/2) # divide P by 2 (testing on the boundary)
+(invasive.anova.P <- invasive.anova$`Pr(>Chisq)`[2]/2) # 0.3347469
 
 diversity.noNA$invasive.pred <- predict(invasive.mod, re.form = NA)
 
