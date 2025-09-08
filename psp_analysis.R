@@ -10,8 +10,8 @@ library(vegan)
 library(lme4)
 
 # Datasets needed (double check that you have the correct year and term):
-transect.raw <- read.csv("data/transect_data_Summer2024.csv", header = TRUE)
-diversity.raw <- read.csv("data/diversity_data_Summer2024.csv", header = TRUE)
+transect.raw <- read.csv("data/transect_data_Fall2024.csv", header = TRUE)
+diversity.raw <- read.csv("data/diversity_data_Fall2024.csv", header = TRUE)
 
 
 
@@ -59,7 +59,8 @@ if(is.numeric(transect.raw$dog_feces) == TRUE) {
   
 }
 
-# Copy values into a table in report.
+print(as.data.frame(transect_summary))
+# Copy values into Table 2 in report.
 
 
 
