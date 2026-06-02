@@ -10,8 +10,8 @@ library(vegan)
 library(lme4)
 
 # Datasets needed (double check that you have the correct year and term):
-transect.raw <- read.csv("data/transect_data_Fall2024.csv", header = TRUE)
-diversity.raw <- read.csv("data/diversity_data_Fall2024.csv", header = TRUE)
+transect.raw <- read.csv("data/transect_data_Fall2025.csv", header = TRUE)
+diversity.raw <- read.csv("data/diversity_data_Fall2025.csv", header = TRUE)
 
 
 
@@ -23,7 +23,8 @@ if(is.numeric(transect.raw$dog_feces) == TRUE) {
   
   feces <- transect.raw %>%
     group_by(direction) %>%
-    summarise(feces = mean(dog_feces))
+    summarise(feces = mean(dog_feces)) %>%
+    arrange(direction = c("W", "E"), garbage = c("W","E"))
   garbage <- transect.raw %>%
     group_by(direction) %>%
     summarise(garbage = mean(garbage))
@@ -70,7 +71,9 @@ div_long <- diversity.raw %>%
   gather(key = "distance", value = "cover", -transect_name, -species) %>%
   mutate(distance = str_replace(distance, "X", ""))
 
-invasive.species.list <- c("Eng_holly", "Him_blackberry", "Eng_laurel", "wall_lettuce", "unk_vetch")
+# Review species and note whether any species need to be added to invasive list
+levels(as.factor(diversity.raw$species))
+invasive.species.list <- c("Eng_holly", "Him_blackberry", "Eng_laurel", "wall_lettuce", "unk_vetch", "him_blackberry")
 
 # STEP 1: Create a summary data frame that describes diversity at each distance and transect
 
@@ -119,20 +122,20 @@ diversity <- bind_rows(diversity.list)
 
 # STEP 2: Create a mixed model for SHANNON
 
-shannon.mod <- lmer(shannon ~ distance + (1|transect_name), data = diversity) # Summer 2024 singular fit warning; results dubious. Fall OK
-summary(shannon.mod) # Distance coefficient estimate: 0.001557
-confint(shannon.mod) # CI for distance: -0.00162978 - 0.004744465
+shannon.mod <- lmer(shannon ~ distance + (1|transect_name), data = diversity) # Summer 2024 singular fit warning; results dubious. Others OK
+summary(shannon.mod) # Distance coefficient estimate: 0.0009661
+confint(shannon.mod) # CI for distance: -0.002133454 - 0.004065653
 var.components.shannon <- as.data.frame(VarCorr(shannon.mod))
 transect.var.shannon <- var.components.shannon$vcov[1]
 residual.var.shannon <- var.components.shannon$vcov[2]
 
 # What % of remaining variance can be explained by transect?
-(transect.var.shannon / (transect.var.shannon + residual.var.shannon)) * 100 # 6.64%
+(transect.var.shannon / (transect.var.shannon + residual.var.shannon)) * 100 # 8.24245%
 
 # Likelihood ratio test with REML. Divide P by 2 (testing on the boundary)
 shannon.null <- lmer(shannon ~ 1 + (1|transect_name), data = diversity)
 (shannon.anova <- anova(shannon.mod, shannon.null))
-(shannon.anova.P <- shannon.anova$`Pr(>Chisq)`[2]/2) # 0.17 (NS)
+(shannon.anova.P <- shannon.anova$`Pr(>Chisq)`[2]/2) # 0.2702147 (NS)
 
 diversity$shannon.pred <- predict(shannon.mod, re.form = NA)
 
@@ -140,20 +143,20 @@ diversity$shannon.pred <- predict(shannon.mod, re.form = NA)
 
 # STEP 3: Create a mixed model for RICHNESS
 
-richness.mod <- lmer(richness ~ distance + (1|transect_name), data = diversity) # Summer 2024 singular fit warning; results dubious. Fall OK
-summary(richness.mod) # Distance coefficient estimate: 0.001200
-confint(richness.mod) # CI for distance: -0.009521974 - 0.01192175
+richness.mod <- lmer(richness ~ distance + (1|transect_name), data = diversity) # Summer 2024 singular fit warning; results dubious. Others OK
+summary(richness.mod) # Distance coefficient estimate: 0.006409
+confint(richness.mod) # CI for distance: -0.003649507 - 0.01646712
 var.components.richness <- as.data.frame(VarCorr(richness.mod))
 transect.var.richness <- var.components.richness$vcov[1]
 residual.var.richness <- var.components.richness$vcov[2]
 
 # What % of remaining variance can be explained by transect?
-(transect.var.richness / (transect.var.richness + residual.var.richness))  * 100 # 5.79%
+(transect.var.richness / (transect.var.richness + residual.var.richness))  * 100 # 9.636798%
 
 # Likelihood ratio test with REML. Divide P by 2 (testing on the boundary)
 richness.null <- lmer(richness ~ 1 + (1|transect_name), data = diversity)
 (richness.anova <- anova(richness.mod, richness.null))
-(richness.anova.P <- richness.anova$`Pr(>Chisq)`[2]/2) #0.41
+(richness.anova.P <- richness.anova$`Pr(>Chisq)`[2]/2) #0.1055553
 
 diversity$richness.pred <- predict(richness.mod, re.form = NA)
 
@@ -164,19 +167,19 @@ diversity.noNA <- diversity %>%
   filter(!is.na(invasive.prop))
 
 invasive.mod <- lmer(invasive.prop ~ distance + (1|transect_name), data = diversity.noNA) # Singular fit warning for Fall 2024; results dubious.
-summary(invasive.mod) # Distance coefficient estimate: -0.0022230 
-confint(invasive.mod) # CI for distance: -0.003867635 - -0.0005784544
+summary(invasive.mod) # Distance coefficient estimate: 0.0002712 
+confint(invasive.mod) # CI for distance: -0.001431911 - 0.001974697
 var.components.invasive <- as.data.frame(VarCorr(invasive.mod))
 transect.var.invasive <- var.components.invasive$vcov[1]
 residual.var.invasive <- var.components.invasive$vcov[2]
 
 # What % of remaining variance can be explained by transect?
-(transect.var.invasive / (transect.var.invasive + residual.var.invasive))  * 100 # 0%
+(transect.var.invasive / (transect.var.invasive + residual.var.invasive))  * 100 # 2.623284%
 
 # Likelihood ratio test with REML. Divide P by 2 (testing on the boundary)
 invasive.null <- lmer(invasive.prop ~ 1 + (1|transect_name), data = diversity.noNA)
 (invasive.anova <- anova(invasive.mod, invasive.null))
-(invasive.anova.P <- invasive.anova$`Pr(>Chisq)`[2]/2) # 0.0041
+(invasive.anova.P <- invasive.anova$`Pr(>Chisq)`[2]/2) # 0.3771483
 
 diversity.noNA$invasive.pred <- predict(invasive.mod, re.form = NA)
 
