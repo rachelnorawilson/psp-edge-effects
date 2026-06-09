@@ -10,8 +10,8 @@ library(vegan)
 library(lme4)
 
 # Datasets needed (double check that you have the correct year and term):
-transect.raw <- read.csv("data/transect_data_Summer2026.csv", header = TRUE)
-diversity.raw <- read.csv("data/diversity_data_Summer2026.csv", header = TRUE)
+transect.raw <- read.csv("data/transect_data_Summer2024.csv", header = TRUE)
+diversity.raw <- read.csv("data/diversity_data_Summer2024.csv", header = TRUE)
 
 
 
@@ -194,7 +194,50 @@ diversity.noNA$invasive.pred <- predict(invasive.mod, re.form = NA)
 save(diversity, diversity.noNA, file = "data/psp_dataframes.Rdata")
 
 
+### STOP HERE UNLESS YOU ARE UPDATING LONG-TERM ANALYSIS ###
 
 
+# STEP 6: Append data frames to pull in long-term analysis script
+load("data/psp_ALL.Rdata")
+current.year <- "Summer2024" # update to reflect current year
+
+
+# First, diversity data with NAs:
+diversity$survey <- current.year
+
+# Avoiding repeats (with NAs)
+if(any(diversity.ALL$survey %in% current.year)) {
+  print("STOP!! Year already exists in data frame!") 
+} else {
+  diversity.ALL <- rbind(diversity, diversity.ALL)
+  print("Success!")
+}
+
+
+# Next, diversity data without NAs (used for invasive proportions only)
+diversity.noNA$survey <- current.year
+
+# Avoiding repeats (no NAs)
+if(any(diversity.ALL.noNA$survey %in% current.year)) { # update to reflect current year
+  print("STOP!! Year already exists in data frame!") 
+} else {
+  diversity.ALL.noNA <- rbind(diversity.noNA, diversity.ALL.noNA)
+  print("Success!")
+}
+
+
+# Finally, transect data. Does not work for data from Fall 2023
+transect_summary$survey <- current.year
+
+# Avoiding repeats (no NAs)
+if(any(transect.ALL$survey %in% current.year)) { # update to reflect current year
+  print("STOP!! Year already exists in data frame!") 
+} else {
+  transect.ALL <- as.data.frame(rbind(transect_summary, transect.ALL))
+  print("Success!")
+}
+
+
+save(diversity.ALL, diversity.ALL.noNA, transect.ALL, file = "data/psp_ALL.Rdata")
 
 
